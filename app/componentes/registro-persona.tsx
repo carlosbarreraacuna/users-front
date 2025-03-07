@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -17,31 +16,16 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+// Esquema validado con Zod (incluye todos los campos del backend)
 const formSchema = z.object({
-  tipoDocumento: z.string({
-    required_error: "Seleccione un tipo de documento",
-  }),
-  numeroDocumento: z.string().min(5, {
-    message: "El número de documento debe tener al menos 5 caracteres",
-  }),
-  nombres: z.string().min(2, {
-    message: "El nombre debe tener al menos 2 caracteres",
-  }),
-  apellidos: z.string().min(2, {
-    message: "Los apellidos deben tener al menos 2 caracteres",
-  }),
-  fechaNacimiento: z.date({
-    required_error: "La fecha de nacimiento es requerida",
-  }),
-  genero: z.string({
-    required_error: "Seleccione un género",
-  }),
-  correo: z.string().email({
-    message: "Ingrese un correo electrónico válido",
-  }),
-  telefono: z.string().min(7, {
-    message: "El teléfono debe tener al menos 7 caracteres",
-  }),
+  tipoDocumento: z.string({ required_error: "Seleccione un tipo de documento" }),
+  numeroDocumento: z.string().min(5, { message: "Mínimo 5 caracteres" }),
+  nombres: z.string().min(2, { message: "Mínimo 2 caracteres" }),
+  apellidos: z.string().min(2, { message: "Mínimo 2 caracteres" }),
+  fechaNacimiento: z.date({ required_error: "Fecha requerida" }),
+  direccion: z.string().min(5, { message: "Dirección requerida" }),
+  correo: z.string().email({ message: "Correo inválido" }),
+  telefono: z.string().min(7, { message: "Mínimo 7 caracteres" }),
 });
 
 export default function RegistroPersona() {
@@ -52,14 +36,42 @@ export default function RegistroPersona() {
       numeroDocumento: "",
       nombres: "",
       apellidos: "",
+      direccion: "",
       correo: "",
       telefono: "",
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    form.reset();
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      const formattedData = {
+        tipo_documento: values.tipoDocumento,
+        numero_documento: values.numeroDocumento,
+        nombres: values.nombres,
+        apellidos: values.apellidos,
+        fecha_nacimiento: values.fechaNacimiento.toISOString().split('T')[0], // Formato YYYY-MM-DD
+        direccion: values.direccion,
+        correo: values.correo,
+        telefono: values.telefono,
+      };
+
+      const response = await fetch('http://localhost:8000/api/personas/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formattedData),
+      });
+
+      if (!response.ok) throw new Error('Error al crear persona');
+      form.reset();
+      console.log('Persona creada exitosamente');
+    } catch (error) {
+      console.error('Error:', error);
+      if (error instanceof Error) {
+        alert(`Error: ${error.message}`);
+      } else {
+        alert('Error desconocido');
+      }
+    }
   }
 
   return (
@@ -71,6 +83,7 @@ export default function RegistroPersona() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Tipo de Documento */}
               <FormField
                 control={form.control}
                 name="tipoDocumento"
@@ -85,9 +98,9 @@ export default function RegistroPersona() {
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="CC">Cédula de Ciudadanía</SelectItem>
-                        <SelectItem value="TI">Tarjeta de Identidad</SelectItem>
                         <SelectItem value="CE">Cédula de Extranjería</SelectItem>
-                        <SelectItem value="PA">Pasaporte</SelectItem>
+                        <SelectItem value="TI">Tarjeta de Identidad</SelectItem>
+                        <SelectItem value="PS">Pasaporte</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -95,6 +108,7 @@ export default function RegistroPersona() {
                 )}
               />
 
+              {/* Número de Documento */}
               <FormField
                 control={form.control}
                 name="numeroDocumento"
@@ -109,6 +123,7 @@ export default function RegistroPersona() {
                 )}
               />
 
+              {/* Nombres */}
               <FormField
                 control={form.control}
                 name="nombres"
@@ -123,6 +138,7 @@ export default function RegistroPersona() {
                 )}
               />
 
+              {/* Apellidos */}
               <FormField
                 control={form.control}
                 name="apellidos"
@@ -137,6 +153,7 @@ export default function RegistroPersona() {
                 )}
               />
 
+              {/* Fecha de Nacimiento */}
               <FormField
                 control={form.control}
                 name="fechaNacimiento"
@@ -148,9 +165,16 @@ export default function RegistroPersona() {
                         <FormControl>
                           <Button
                             variant={"outline"}
-                            className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                            className={cn(
+                              "w-full pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
                           >
-                            {field.value ? format(field.value, "PPP", { locale: es }) : <span>Seleccione fecha</span>}
+                            {field.value ? (
+                              format(field.value, "PPP", { locale: es })
+                            ) : (
+                              <span>Seleccione fecha</span>
+                            )}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
                         </FormControl>
@@ -160,7 +184,9 @@ export default function RegistroPersona() {
                           mode="single"
                           selected={field.value}
                           onSelect={field.onChange}
-                          disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
+                          disabled={(date) =>
+                            date > new Date() || date < new Date("1900-01-01")
+                          }
                           initialFocus
                           locale={es}
                         />
@@ -171,29 +197,22 @@ export default function RegistroPersona() {
                 )}
               />
 
+              {/* Dirección */}
               <FormField
                 control={form.control}
-                name="genero"
+                name="direccion"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Género</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccione género" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="M">Masculino</SelectItem>
-                        <SelectItem value="F">Femenino</SelectItem>
-                        <SelectItem value="O">Otro</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>Dirección</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ingrese dirección" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
+              {/* Correo Electrónico */}
               <FormField
                 control={form.control}
                 name="correo"
@@ -208,6 +227,7 @@ export default function RegistroPersona() {
                 )}
               />
 
+              {/* Teléfono */}
               <FormField
                 control={form.control}
                 name="telefono"
