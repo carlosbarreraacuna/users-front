@@ -1,5 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import RegistroPersona from "@/app/componentes/registro-persona"
+import TablaPersonas from "@/app/componentes/tabla-personas"
 
 export default function Home() {
   return (
@@ -14,6 +15,10 @@ export default function Home() {
 
         <TabsContent value="registro">
           <RegistroPersona />
+        </TabsContent>
+
+        <TabsContent value="tabla">
+          <TablaPersonas />
         </TabsContent>
       </Tabs>
     </main>
