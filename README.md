@@ -1,36 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sistema de Registro de Personas (Frontend)
 
-## Getting Started
+## Descripción
 
-First, run the development server:
+Este proyecto es el frontend de la aplicación "Sistema de Registro de Personas". Está construido con Next.js y se conecta con un backend (API REST desarrollada en Django). 
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Características
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+* Registro de nuevas personas con validación de datos.
+* Listado de personas registradas con opción de búsqueda.
+* Edición y eliminación de registros existentes.
+* Visualización de tareas asignadas a cada persona.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Instalación
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Sigue estos pasos para clonar y configurar el proyecto localmente:
 
-## Learn More
+1. **Clona el repositorio:**
 
-To learn more about Next.js, take a look at the following resources:
+   ```bash
+   git clone https://github.com/carlosbarreraacuna/users-front/
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+2. **Accede a la carpeta del proyecto e instala las dependencias:**
+   cd users-front 
+   npm install
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+3. **Configura las variables de entorno:**
+    NEXT_PUBLIC_API_URL=http://localhost:8000
 
-## Deploy on Vercel
+4. npm run dev
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+5. ![Pantalla principal de la aplicación](https://github.com/user-attachments/assets/b563a947-135c-4833-b2ae-28993d2efd16)
+6. ![Personas registradas](https://github.com/user-attachments/assets/74c20069-e0e1-4982-ae39-d6a22ac854d6)
+7. ![Tareas asignadas](https://github.com/user-attachments/assets/adfd8691-2538-4eea-8484-da7f6937339f)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+
+
