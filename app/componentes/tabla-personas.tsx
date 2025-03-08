@@ -10,8 +10,18 @@ import { Edit, Trash2, Search } from "lucide-react"
 import { InfoModal } from "@/app/componentes/modals"
 import { EditModal } from "@/app/componentes/editmodal" // Corrected import
 
+type Persona = {
+  id: number
+  tipo_documento: string
+  numero_documento: string
+  nombres: string
+  apellidos: string
+  correo: string
+  telefono: string
+}
+
 export default function TablaPersonas() {
-  const [personas, setPersonas] = useState([])
+  const [personas, setPersonas] = useState<Persona[]>([])
   const [busqueda, setBusqueda] = useState("")
   const [personaAEliminar, setPersonaAEliminar] = useState<number | null>(null)
   const [personaAEditar, setPersonaAEditar] = useState<any>(null)
@@ -29,8 +39,12 @@ export default function TablaPersonas() {
         }
         const data = await response.json()
         setPersonas(data)
-      } catch (error) {
-        setError(error.message)
+      } catch (error: unknown) { 
+        if (error instanceof Error) {
+          setError(error.message)
+        } else {
+          setError("Error desconocido")
+        }
       } finally {
         setLoading(false)
       }
@@ -55,8 +69,12 @@ export default function TablaPersonas() {
 
       const data = await response.json()
       setPersonas(data)
-    } catch (error) {
-      setError(error.message)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setError(error.message)
+      } else {
+        setError("Error desconocido")
+      }
     } finally {
       setLoading(false)
     }
@@ -77,9 +95,13 @@ export default function TablaPersonas() {
           throw new Error("Error al eliminar la persona")
         }
         setPersonas(personas.filter((p) => p.id !== personaAEliminar))
-      } catch (error) {
-        setError(error.message)
-      } finally {
+      }  catch (error) {
+        if (error instanceof Error) {
+          setError((error as Error).message)
+        } else {
+          setError("Error desconocido")
+        }
+      }  finally {
         setShowDeleteModal(false)
         setPersonaAEliminar(null)
       }
@@ -102,9 +124,13 @@ export default function TablaPersonas() {
         throw new Error("Error al editar la persona")
       }
       setPersonas(personas.map((p) => (p.id === updatedPersona.id ? updatedPersona : p)))
-    } catch (error) {
-      setError(error.message)
-    } finally {
+    }  catch (error) {
+      if (error instanceof Error) {
+        setError((error as Error).message)
+      } else {
+        setError("Error desconocido")
+      }
+    }  finally {
       setShowEditModal(false)
       setPersonaAEditar(null)
     }
@@ -215,4 +241,3 @@ export default function TablaPersonas() {
     </Card>
   )
 }
-

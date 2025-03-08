@@ -30,17 +30,28 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 
+interface Tarea {
+  id: number;
+  titulo: string;
+  descripcion: string;
+  fecha_limite: string;
+  persona: string;
+  persona_tipo_documento?: string;
+  persona_numero_documento?: string;
+  completada?: boolean;
+}
+
 export default function Tareas() {
-  const [tareas, setTareas] = useState([])
+  const [tareas, setTareas] = useState<Tarea[]>([])
   const [nuevaTarea, setNuevaTarea] = useState({
     titulo: "",
     descripcion: "",
     fecha_limite: "",
     persona: "",
   })
-  const [tareaEditando, setTareaEditando] = useState(null)
+  const [tareaEditando, setTareaEditando] = useState<Tarea | null>(null)
   const [modalEditar, setModalEditar] = useState(false)
-  const [confirmarEliminar, setConfirmarEliminar] = useState(null)
+  const [confirmarEliminar, setConfirmarEliminar] = useState<number | null>(null)
   const [filtros, setFiltros] = useState({
     fecha_limite: "",
     fecha_inicio: "",
@@ -112,13 +123,15 @@ export default function Tareas() {
 
   const actualizarTarea = async () => {
     try {
-      await fetch(`http://localhost:8000/api/tareas/${tareaEditando.id}/`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(tareaEditando),
-      })
+      if (tareaEditando) {
+        await fetch(`http://localhost:8000/api/tareas/${tareaEditando.id}/`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(tareaEditando),
+        })
+      }
       setModalEditar(false)
       setTareaEditando(null)
       obtenerTareas()
@@ -127,7 +140,7 @@ export default function Tareas() {
     }
   }
 
-  const eliminarTarea = async (id) => {
+  const eliminarTarea = async (id: number) => {
     try {
       await fetch(`http://localhost:8000/api/tareas/${id}/`, {
         method: "DELETE",
@@ -139,12 +152,12 @@ export default function Tareas() {
     }
   }
 
-  const abrirModalEditar = (tarea) => {
+  const abrirModalEditar = (tarea: Tarea) => {
     setTareaEditando({ ...tarea })
     setModalEditar(true)
   }
 
-  const handleTabChange = (value) => {
+  const handleTabChange = (value: string) => {
     setFiltros({
       ...filtros,
       tipoFiltro: value,
@@ -152,7 +165,7 @@ export default function Tareas() {
   }
 
   // Función para renderizar la vista móvil de una tarea
-  const renderTareaMovil = (tarea, index) => (
+  const renderTareaMovil = (tarea: Tarea) => (
     <Card key={tarea.id} className="mb-3">
       <CardContent className="p-4">
         <div className="flex justify-between items-start mb-2">
@@ -376,7 +389,7 @@ export default function Tareas() {
       {/* Vista móvil (cards) */}
       <div className="md:hidden">
         {Array.isArray(tareas) && tareas.length > 0 ? (
-          tareas.map((tarea, index) => renderTareaMovil(tarea, index))
+          tareas.map((tarea) => renderTareaMovil(tarea))
         ) : (
           <div className="text-center p-4 text-gray-500 text-sm border rounded-lg">No hay tareas disponibles</div>
         )}
@@ -508,7 +521,7 @@ export default function Tareas() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => eliminarTarea(confirmarEliminar)}>Eliminar</AlertDialogAction>
+            <AlertDialogAction onClick={() => confirmarEliminar !== null && eliminarTarea(confirmarEliminar)}>Eliminar</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
