@@ -29,9 +29,11 @@ Sigue estos pasos para clonar y configurar el proyecto localmente:
 
 4. npm run dev
 
-5. ![Pantalla principal de la aplicación](https://github.com/user-attachments/assets/b563a947-135c-4833-b2ae-28993d2efd16)
-6. ![Personas registradas](https://github.com/user-attachments/assets/74c20069-e0e1-4982-ae39-d6a22ac854d6)
-7. ![Tareas asignadas](https://github.com/user-attachments/assets/adfd8691-2538-4eea-8484-da7f6937339f)
+5. ![Inicio de la aplicacion](https://github.com/user-attachments/assets/7f6d998b-7db1-4bef-960c-44b2631ffa54)
+6. ![Personas Registradas](https://github.com/user-attachments/assets/7ebf23db-29af-44c4-afb7-41dc4698e049)
+8. ![Tareas asignadas](https://github.com/user-attachments/assets/454f606e-d99a-4e6e-aa9d-712482598bb1)
+
+)
 
 
 
