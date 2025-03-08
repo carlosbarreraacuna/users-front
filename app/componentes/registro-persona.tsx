@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -15,6 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SuccessModal, ErrorModal, InfoModal } from "@/app/componentes/modals";
 
 // Esquema validado con Zod (incluye todos los campos del backend)
 const formSchema = z.object({
@@ -29,6 +31,11 @@ const formSchema = z.object({
 });
 
 export default function RegistroPersona() {
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(""); // Estado para almacenar el mensaje de error
+  const [showInfoModal, setShowInfoModal] = useState(false);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -54,25 +61,31 @@ export default function RegistroPersona() {
         correo: values.correo,
         telefono: values.telefono,
       };
-
+  
       const response = await fetch('http://localhost:8000/api/personas/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formattedData),
       });
-
-      if (!response.ok) throw new Error('Error al crear persona');
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error(errorData); 
+        throw new Error(errorData.message || 'Error al crear persona');
+      }
       form.reset();
-      console.log('Persona creada exitosamente');
+      setShowSuccessModal(true);
     } catch (error) {
       console.error('Error:', error);
       if (error instanceof Error) {
-        alert(`Error: ${error.message}`);
+        setErrorMessage(error.message); // Almacena el mensaje de error
       } else {
-        alert('Error desconocido');
+        setErrorMessage('An unknown error occurred');
       }
+      setShowErrorModal(true);
     }
   }
+  
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
@@ -244,7 +257,7 @@ export default function RegistroPersona() {
             </div>
 
             <div className="flex justify-end space-x-4">
-              <Button type="button" variant="outline" onClick={() => form.reset()}>
+              <Button type="button" variant="outline" onClick={() => setShowInfoModal(true)}>
                 Cancelar
               </Button>
               <Button type="submit">
@@ -255,6 +268,28 @@ export default function RegistroPersona() {
           </form>
         </Form>
       </CardContent>
+
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        message="Registro guardado exitosamente"
+      />
+
+      <ErrorModal
+        isOpen={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        message={errorMessage} // Muestra el mensaje de error específico
+      />
+
+      <InfoModal
+        isOpen={showInfoModal}
+        onClose={() => setShowInfoModal(false)}
+        message="¿Está seguro que desea salir sin guardar los cambios?"
+        onConfirm={() => {
+          form.reset();
+          setShowInfoModal(false);
+        }}
+      />
     </Card>
   );
 }

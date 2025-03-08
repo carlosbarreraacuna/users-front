@@ -1,72 +1,121 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Edit, Trash2, Search } from "lucide-react"
-
-// Datos de ejemplo
-const personasIniciales = [
-  {
-    id: 1,
-    tipoDocumento: "CC",
-    numeroDocumento: "1234567890",
-    nombres: "Juan Carlos",
-    apellidos: "Pérez Gómez",
-    fechaNacimiento: "1990-05-15",
-    genero: "M",
-    correo: "juan.perez@ejemplo.com",
-    telefono: "3001234567",
-  },
-  {
-    id: 2,
-    tipoDocumento: "CE",
-    numeroDocumento: "9876543210",
-    nombres: "María José",
-    apellidos: "López Rodríguez",
-    fechaNacimiento: "1985-10-20",
-    genero: "F",
-    correo: "maria.lopez@ejemplo.com",
-    telefono: "3109876543",
-  },
-  {
-    id: 3,
-    tipoDocumento: "TI",
-    numeroDocumento: "1122334455",
-    nombres: "Pedro Antonio",
-    apellidos: "González Martínez",
-    fechaNacimiento: "2000-03-25",
-    genero: "M",
-    correo: "pedro.gonzalez@ejemplo.com",
-    telefono: "3201234567",
-  },
-]
+import { InfoModal } from "@/app/componentes/modals"
+import { EditModal } from "@/app/componentes/editmodal" // Corrected import
 
 export default function TablaPersonas() {
-  const [personas, setPersonas] = useState(personasIniciales)
+  const [personas, setPersonas] = useState([])
   const [busqueda, setBusqueda] = useState("")
+  const [personaAEliminar, setPersonaAEliminar] = useState<number | null>(null)
+  const [personaAEditar, setPersonaAEditar] = useState<any>(null)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
 
-  const handleBuscar = () => {
-    if (busqueda.trim() === "") {
-      setPersonas(personasIniciales)
-      return
+  useEffect(() => {
+    const fetchPersonas = async () => {
+      try {
+        const response = await fetch("http://localhost:8000/api/personas/")
+        if (!response.ok) {
+          throw new Error("Error al obtener los datos")
+        }
+        const data = await response.json()
+        setPersonas(data)
+      } catch (error) {
+        setError(error.message)
+      } finally {
+        setLoading(false)
+      }
     }
 
-    const resultados = personasIniciales.filter(
-      (persona) =>
-        persona.numeroDocumento.includes(busqueda) ||
-        persona.nombres.toLowerCase().includes(busqueda.toLowerCase()) ||
-        persona.apellidos.toLowerCase().includes(busqueda.toLowerCase()),
-    )
+    fetchPersonas()
+  }, [])
 
-    setPersonas(resultados)
+  const handleBuscar = async () => {
+    try {
+      setLoading(true)
+      let url = "http://localhost:8000/api/personas/"
+
+      if (busqueda.trim() !== "") {
+        url += `?numero_documento=${busqueda}`
+      }
+
+      const response = await fetch(url)
+      if (!response.ok) {
+        throw new Error("Error al obtener los datos")
+      }
+
+      const data = await response.json()
+      setPersonas(data)
+    } catch (error) {
+      setError(error.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const eliminarPersona = (id: number) => {
-    setPersonas(personas.filter((p) => p.id !== id))
+  const confirmarEliminar = (id: number) => {
+    setPersonaAEliminar(id)
+    setShowDeleteModal(true)
+  }
+
+  const eliminarPersona = async () => {
+    if (personaAEliminar) {
+      try {
+        const response = await fetch(`http://localhost:8000/api/personas/${personaAEliminar}/`, {
+          method: "DELETE",
+        })
+        if (!response.ok) {
+          throw new Error("Error al eliminar la persona")
+        }
+        setPersonas(personas.filter((p) => p.id !== personaAEliminar))
+      } catch (error) {
+        setError(error.message)
+      } finally {
+        setShowDeleteModal(false)
+        setPersonaAEliminar(null)
+      }
+    }
+  }
+
+  const confirmarEditar = (persona: any) => {
+    setPersonaAEditar(persona)
+    setShowEditModal(true)
+  }
+
+  const editarPersona = async (updatedPersona: any) => {
+    try {
+      const response = await fetch(`http://localhost:8000/api/personas/${updatedPersona.id}/`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedPersona),
+      })
+      if (!response.ok) {
+        throw new Error("Error al editar la persona")
+      }
+      setPersonas(personas.map((p) => (p.id === updatedPersona.id ? updatedPersona : p)))
+    } catch (error) {
+      setError(error.message)
+    } finally {
+      setShowEditModal(false)
+      setPersonaAEditar(null)
+    }
+  }
+
+  if (loading) {
+    return <div>Cargando...</div>
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>
   }
 
   return (
@@ -77,12 +126,12 @@ export default function TablaPersonas() {
       <CardContent>
         <div className="flex items-end gap-4 mb-6">
           <div className="grid w-full max-w-sm items-center gap-1.5">
-            <Label htmlFor="busqueda">Buscar por documento o nombre</Label>
+            <Label htmlFor="busqueda">Buscar por número de documento</Label>
             <Input
               id="busqueda"
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
-              placeholder="Ingrese documento o nombre"
+              placeholder="Ingrese número de documento"
             />
           </div>
           <Button onClick={handleBuscar}>
@@ -95,8 +144,8 @@ export default function TablaPersonas() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Tipo Doc.</TableHead>
-                <TableHead>Número</TableHead>
+                <TableHead>Tipo Documento</TableHead>
+                <TableHead>Número Documento</TableHead>
                 <TableHead>Nombres</TableHead>
                 <TableHead>Apellidos</TableHead>
                 <TableHead>Correo</TableHead>
@@ -108,18 +157,28 @@ export default function TablaPersonas() {
               {personas.length > 0 ? (
                 personas.map((persona) => (
                   <TableRow key={persona.id}>
-                    <TableCell>{persona.tipoDocumento}</TableCell>
-                    <TableCell>{persona.numeroDocumento}</TableCell>
+                    <TableCell>
+                      {persona.tipo_documento === "CC"
+                        ? "Cédula de Ciudadanía"
+                        : persona.tipo_documento === "CE"
+                          ? "Cédula de Extranjería"
+                          : persona.tipo_documento === "TI"
+                            ? "Tarjeta de Identidad"
+                            : persona.tipo_documento === "PS"
+                              ? "Pasaporte"
+                              : persona.tipo_documento}
+                    </TableCell>
+                    <TableCell>{persona.numero_documento}</TableCell>
                     <TableCell>{persona.nombres}</TableCell>
                     <TableCell>{persona.apellidos}</TableCell>
                     <TableCell>{persona.correo}</TableCell>
                     <TableCell>{persona.telefono}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button variant="outline" size="icon">
+                        <Button variant="outline" size="icon" onClick={() => confirmarEditar(persona)}>
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="destructive" size="icon" onClick={() => eliminarPersona(persona.id)}>
+                        <Button variant="destructive" size="icon" onClick={() => confirmarEliminar(persona.id)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -136,7 +195,24 @@ export default function TablaPersonas() {
             </TableBody>
           </Table>
         </div>
+
+        <InfoModal
+          isOpen={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+          message="¿Está seguro que desea eliminar esta persona?"
+          onConfirm={eliminarPersona}
+        />
+
+        {showEditModal && personaAEditar && (
+          <EditModal
+            persona={personaAEditar}
+            isOpen={showEditModal}
+            onClose={() => setShowEditModal(false)}
+            onSave={editarPersona}
+          />
+        )}
       </CardContent>
     </Card>
   )
 }
+
