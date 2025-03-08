@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Pencil, Trash2 } from "lucide-react"
+import { Pencil, Trash2, Filter, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -24,6 +24,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
 
 export default function Tareas() {
   const [tareas, setTareas] = useState([])
@@ -36,18 +41,47 @@ export default function Tareas() {
   const [tareaEditando, setTareaEditando] = useState(null)
   const [modalEditar, setModalEditar] = useState(false)
   const [confirmarEliminar, setConfirmarEliminar] = useState(null)
-  const [filtros, setFiltros] = useState({ fecha_limite: "", persona: "" })
+  const [filtros, setFiltros] = useState({
+    fecha_limite: "",
+    fecha_inicio: "",
+    fecha_fin: "",
+    tipo_documento: "CC",
+    numero_documento: "",
+    tipoFiltro: "simple", // simple, rango, persona
+  })
+  const [filtrosAbiertos, setFiltrosAbiertos] = useState(true)
 
   useEffect(() => {
     obtenerTareas()
   }, [])
 
-  const obtenerTareas = async (filtros = {}) => {
+  const obtenerTareas = async (filtrosParam = filtros) => {
     try {
       let url = "http://localhost:8000/api/tareas/"
-      if (filtros.fecha_limite) url += `?fecha_limite=${filtros.fecha_limite}`
-      if (filtros.persona) {
-        url += url.includes("?") ? `&persona=${filtros.persona}` : `?persona=${filtros.persona}`
+
+      // Determinar qué tipo de filtro aplicar
+      switch (filtrosParam.tipoFiltro) {
+        case "rango":
+          // Filtrar por rango de fechas
+          if (filtrosParam.fecha_inicio && filtrosParam.fecha_fin) {
+            url = `http://localhost:8000/api/tareas/por_rango_fechas/?fecha_inicio=${filtrosParam.fecha_inicio}&fecha_fin=${filtrosParam.fecha_fin}`
+          }
+          break
+
+        case "persona":
+          // Filtrar por persona (tipo y número de documento)
+          if (filtrosParam.tipo_documento && filtrosParam.numero_documento) {
+            url = `http://localhost:8000/api/tareas/por_persona/?tipo_documento=${filtrosParam.tipo_documento}&numero_documento=${filtrosParam.numero_documento}`
+          }
+          break
+
+        case "simple":
+        default:
+          // Filtrar por fecha límite si está especificada
+          if (filtrosParam.fecha_limite) {
+            url += `?fecha_limite=${filtrosParam.fecha_limite}`
+          }
+          break
       }
 
       const response = await fetch(url)
@@ -110,67 +144,246 @@ export default function Tareas() {
     setModalEditar(true)
   }
 
+  const handleTabChange = (value) => {
+    setFiltros({
+      ...filtros,
+      tipoFiltro: value,
+    })
+  }
+
+  // Función para renderizar la vista móvil de una tarea
+  const renderTareaMovil = (tarea, index) => (
+    <Card key={tarea.id} className="mb-3">
+      <CardContent className="p-4">
+        <div className="flex justify-between items-start mb-2">
+          <div>
+            <h3 className="font-medium">{tarea.titulo}</h3>
+            <p className="text-sm text-gray-500 mt-1">{tarea.descripcion}</p>
+          </div>
+          <div className="flex gap-1">
+            <Button
+              onClick={() => abrirModalEditar(tarea)}
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-gray-500"
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+            <Button
+              onClick={() => setConfirmarEliminar(tarea.id)}
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-gray-500"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 text-sm mt-3">
+          <div>
+            <span className="text-gray-500 block">Fecha límite:</span>
+            <span>{tarea.fecha_limite}</span>
+          </div>
+          <div>
+            <span className="text-gray-500 block">ID Persona:</span>
+            <span>{tarea.persona}</span>
+          </div>
+          <div>
+            <span className="text-gray-500 block">Tipo documento:</span>
+            <span>{tarea.persona_tipo_documento || "-"}</span>
+          </div>
+          <div>
+            <span className="text-gray-500 block">Número documento:</span>
+            <span>{tarea.persona_numero_documento || "-"}</span>
+          </div>
+        </div>
+
+        {tarea.completada ? (
+          <Badge className="mt-3 bg-green-100 text-green-800 hover:bg-green-200">Completada</Badge>
+        ) : (
+          <Badge variant="outline" className="mt-3">
+            Pendiente
+          </Badge>
+        )}
+      </CardContent>
+    </Card>
+  )
+
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Gestión de Tareas</h1>
+    <div className="max-w-6xl mx-auto p-3 sm:p-6">
+      <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Gestión de Tareas</h1>
 
       {/* Filtros */}
-      <div className="flex mb-4 gap-2">
-        <Input
-          type="date"
-          value={filtros.fecha_limite}
-          onChange={(e) => setFiltros({ ...filtros, fecha_limite: e.target.value })}
-          className="text-sm w-auto"
-          placeholder="dd/mm/aaaa"
-        />
-        <Input
-          type="text"
-          value={filtros.persona}
-          onChange={(e) => setFiltros({ ...filtros, persona: e.target.value })}
-          className="text-sm flex-grow"
-          placeholder="Filtrar por persona"
-        />
-        <Button onClick={() => obtenerTareas(filtros)} variant="secondary" className="whitespace-nowrap">
-          Filtrar
-        </Button>
-      </div>
+      <Collapsible open={filtrosAbiertos} onOpenChange={setFiltrosAbiertos} className="mb-4 sm:mb-6">
+        <CollapsibleTrigger asChild>
+          <Button variant="outline" className="flex w-full justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4" />
+              <span>Filtros de búsqueda</span>
+            </div>
+            <ChevronRight className={`h-4 w-4 transition-transform ${filtrosAbiertos ? "rotate-90" : ""}`} />
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="border rounded-lg p-3 sm:p-4 bg-gray-50">
+            <Tabs defaultValue="simple" value={filtros.tipoFiltro} onValueChange={handleTabChange} className="w-full">
+              <TabsList className="grid grid-cols-3 mb-4">
+                <TabsTrigger value="simple">Por fecha límite</TabsTrigger>
+                <TabsTrigger value="rango">Por rango de fechas</TabsTrigger>
+                <TabsTrigger value="persona">Por persona</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="simple" className="space-y-4">
+                <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
+                  <div className="w-full sm:flex-1">
+                    <Label htmlFor="fecha_limite" className="text-sm">
+                      Fecha límite
+                    </Label>
+                    <Input
+                      id="fecha_limite"
+                      type="date"
+                      value={filtros.fecha_limite}
+                      onChange={(e) => setFiltros({ ...filtros, fecha_limite: e.target.value })}
+                      className="mt-1"
+                    />
+                  </div>
+                  <Button onClick={() => obtenerTareas()} variant="secondary" className="w-full sm:w-auto">
+                    Buscar
+                  </Button>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="rango" className="space-y-4">
+                <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
+                  <div className="w-full sm:flex-1">
+                    <Label htmlFor="fecha_inicio" className="text-sm">
+                      Fecha inicio
+                    </Label>
+                    <Input
+                      id="fecha_inicio"
+                      type="date"
+                      value={filtros.fecha_inicio}
+                      onChange={(e) => setFiltros({ ...filtros, fecha_inicio: e.target.value })}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div className="w-full sm:flex-1">
+                    <Label htmlFor="fecha_fin" className="text-sm">
+                      Fecha fin
+                    </Label>
+                    <Input
+                      id="fecha_fin"
+                      type="date"
+                      value={filtros.fecha_fin}
+                      onChange={(e) => setFiltros({ ...filtros, fecha_fin: e.target.value })}
+                      className="mt-1"
+                    />
+                  </div>
+                  <Button
+                    onClick={() => obtenerTareas()}
+                    variant="secondary"
+                    disabled={!filtros.fecha_inicio || !filtros.fecha_fin}
+                    className="w-full sm:w-auto"
+                  >
+                    Buscar
+                  </Button>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="persona" className="space-y-4">
+                <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
+                  <div className="w-full sm:w-1/4">
+                    <Label htmlFor="tipo_documento" className="text-sm">
+                      Tipo documento
+                    </Label>
+                    <Select
+                      value={filtros.tipo_documento}
+                      onValueChange={(value) => setFiltros({ ...filtros, tipo_documento: value })}
+                    >
+                      <SelectTrigger id="tipo_documento" className="mt-1">
+                        <SelectValue placeholder="Tipo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="CC">CC</SelectItem>
+                        <SelectItem value="TI">TI</SelectItem>
+                        <SelectItem value="CE">CE</SelectItem>
+                        <SelectItem value="PS">PS</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="w-full sm:flex-1">
+                    <Label htmlFor="numero_documento" className="text-sm">
+                      Número documento
+                    </Label>
+                    <Input
+                      id="numero_documento"
+                      type="text"
+                      value={filtros.numero_documento}
+                      onChange={(e) => setFiltros({ ...filtros, numero_documento: e.target.value })}
+                      className="mt-1"
+                    />
+                  </div>
+                  <Button
+                    onClick={() => obtenerTareas()}
+                    variant="secondary"
+                    disabled={!filtros.numero_documento}
+                    className="w-full sm:w-auto"
+                  >
+                    Buscar
+                  </Button>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
 
       {/* Formulario */}
-      <div className="flex mb-6 gap-2 flex-wrap md:flex-nowrap">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-row mb-4 sm:mb-6 gap-2">
         <Input
           type="text"
           placeholder="Título"
           value={nuevaTarea.titulo}
           onChange={(e) => setNuevaTarea({ ...nuevaTarea, titulo: e.target.value })}
-          className="text-sm flex-grow"
+          className="text-sm"
         />
         <Input
           type="text"
           placeholder="Descripción"
           value={nuevaTarea.descripcion}
           onChange={(e) => setNuevaTarea({ ...nuevaTarea, descripcion: e.target.value })}
-          className="text-sm flex-grow"
+          className="text-sm"
         />
         <Input
           type="date"
           value={nuevaTarea.fecha_limite}
           onChange={(e) => setNuevaTarea({ ...nuevaTarea, fecha_limite: e.target.value })}
-          className="text-sm w-auto"
+          className="text-sm"
         />
         <Input
           type="text"
           placeholder="ID Persona"
           value={nuevaTarea.persona}
           onChange={(e) => setNuevaTarea({ ...nuevaTarea, persona: e.target.value })}
-          className="text-sm w-auto"
+          className="text-sm"
         />
-        <Button onClick={crearTarea} variant="default" className="whitespace-nowrap">
+        <Button onClick={crearTarea} variant="default" className="whitespace-nowrap w-full sm:w-auto">
           Agregar
         </Button>
       </div>
 
-      {/* Tabla de tareas */}
-      <div className="overflow-x-auto rounded-lg border border-gray-200">
+      {/* Vista móvil (cards) */}
+      <div className="md:hidden">
+        {Array.isArray(tareas) && tareas.length > 0 ? (
+          tareas.map((tarea, index) => renderTareaMovil(tarea, index))
+        ) : (
+          <div className="text-center p-4 text-gray-500 text-sm border rounded-lg">No hay tareas disponibles</div>
+        )}
+      </div>
+
+      {/* Vista desktop (tabla) */}
+      <div className="hidden md:block overflow-x-auto rounded-lg border border-gray-200">
         <table className="w-full border-collapse">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
@@ -178,7 +391,9 @@ export default function Tareas() {
               <th className="p-3 text-left font-medium text-gray-500 text-sm">Título</th>
               <th className="p-3 text-left font-medium text-gray-500 text-sm">Descripción</th>
               <th className="p-3 text-left font-medium text-gray-500 text-sm">Fecha Límite</th>
-              <th className="p-3 text-left font-medium text-gray-500 text-sm">Persona</th>
+              <th className="p-3 text-left font-medium text-gray-500 text-sm">ID Persona</th>
+              <th className="p-3 text-left font-medium text-gray-500 text-sm">Tipo Doc.</th>
+              <th className="p-3 text-left font-medium text-gray-500 text-sm">Número Doc.</th>
               <th className="p-3 text-center font-medium text-gray-500 text-sm">Acciones</th>
             </tr>
           </thead>
@@ -194,6 +409,8 @@ export default function Tareas() {
                   <td className="p-3 text-sm">{tarea.descripcion}</td>
                   <td className="p-3 text-sm">{tarea.fecha_limite}</td>
                   <td className="p-3 text-sm">{tarea.persona}</td>
+                  <td className="p-3 text-sm">{tarea.persona_tipo_documento || "-"}</td>
+                  <td className="p-3 text-sm">{tarea.persona_numero_documento || "-"}</td>
                   <td className="p-3 flex justify-center gap-2">
                     <Button
                       onClick={() => abrirModalEditar(tarea)}
@@ -218,7 +435,7 @@ export default function Tareas() {
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="p-4 text-center text-gray-500 text-sm">
+                <td colSpan={8} className="p-4 text-center text-gray-500 text-sm">
                   No hay tareas disponibles
                 </td>
               </tr>
