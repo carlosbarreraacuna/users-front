@@ -122,7 +122,7 @@ export default function Home() {
 
               <div className="flex items-center gap-2 md:gap-3">
                 <div className="w-8 h-8 rounded-lg bg-gray-200 overflow-hidden">
-                  <Image src="/placeholder.svg?height=32&width=32" alt="Profile" className="w-full h-full object-cover" />
+                  <Image src="/img/boy.png" alt="Profile" width={32} height={32} className="w-full h-full object-cover" />
                 </div>
                 <div className="hidden md:flex gap-2 items-center">
                   <span className="w-2 h-2 rounded-full bg-green-500"></span>
