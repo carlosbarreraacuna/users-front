@@ -4,6 +4,7 @@ import { useState } from "react"
 import RegistroPersona from "@/app/componentes/registro-persona"
 import TablaPersonas from "@/app/componentes/tabla-personas"
 import Tareas from "@/app/componentes/tareas"
+import Image from 'next/image';
 import { UserPlus, Users, ClipboardList, Menu, X, Search, Bell } from "lucide-react"
 
 export default function Home() {
@@ -121,7 +122,7 @@ export default function Home() {
 
               <div className="flex items-center gap-2 md:gap-3">
                 <div className="w-8 h-8 rounded-lg bg-gray-200 overflow-hidden">
-                  <img src="/placeholder.svg?height=32&width=32" alt="Profile" className="w-full h-full object-cover" />
+                  <Image src="/placeholder.svg?height=32&width=32" alt="Profile" className="w-full h-full object-cover" />
                 </div>
                 <div className="hidden md:flex gap-2 items-center">
                   <span className="w-2 h-2 rounded-full bg-green-500"></span>

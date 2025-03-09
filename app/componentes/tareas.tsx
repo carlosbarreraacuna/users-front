@@ -1,8 +1,9 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { Pencil, Trash2, Filter, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
+
 import {
   Dialog,
   DialogContent,
@@ -62,52 +63,46 @@ export default function Tareas() {
   })
   const [filtrosAbiertos, setFiltrosAbiertos] = useState(true)
 
-  useEffect(() => {
-    obtenerTareas()
-  }, [])
 
-  const obtenerTareas = async (filtrosParam = filtros) => {
+  const obtenerTareas = useCallback(async (filtrosParam = filtros) => {
     try {
-      let url = "http://localhost:8000/api/tareas/"
-
-      // Determinar qué tipo de filtro aplicar
+      let url = `${process.env.NEXT_PUBLIC_API_URL}/api/tareas/`;
+  
       switch (filtrosParam.tipoFiltro) {
         case "rango":
-          // Filtrar por rango de fechas
           if (filtrosParam.fecha_inicio && filtrosParam.fecha_fin) {
-            url = `http://localhost:8000/api/tareas/por_rango_fechas/?fecha_inicio=${filtrosParam.fecha_inicio}&fecha_fin=${filtrosParam.fecha_fin}`
+            url = `${process.env.NEXT_PUBLIC_API_URL}/api/tareas/por_rango_fechas/?fecha_inicio=${filtrosParam.fecha_inicio}&fecha_fin=${filtrosParam.fecha_fin}`;
           }
-          break
-
+          break;
         case "persona":
-          // Filtrar por persona (tipo y número de documento)
           if (filtrosParam.tipo_documento && filtrosParam.numero_documento) {
-            url = `http://localhost:8000/api/tareas/por_persona/?tipo_documento=${filtrosParam.tipo_documento}&numero_documento=${filtrosParam.numero_documento}`
+            url = `${process.env.NEXT_PUBLIC_API_URL}/api/tareas/por_persona/?tipo_documento=${filtrosParam.tipo_documento}&numero_documento=${filtrosParam.numero_documento}`;
           }
-          break
-
+          break;
         case "simple":
         default:
-          // Filtrar por fecha límite si está especificada
           if (filtrosParam.fecha_limite) {
-            url += `?fecha_limite=${filtrosParam.fecha_limite}`
+            url += `?fecha_limite=${filtrosParam.fecha_limite}`;
           }
-          break
+          break;
       }
-
-      const response = await fetch(url)
-      const data = await response.json()
-      // Ensure data is an array
-      setTareas(Array.isArray(data) ? data : [])
+  
+      const response = await fetch(url);
+      const data = await response.json();
+      setTareas(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error("Error al obtener tareas", error)
-      setTareas([]) // Set to empty array on error
+      console.error("Error al obtener tareas", error);
+      setTareas([]);
     }
-  }
+  }, [filtros]);
+  
+  useEffect(() => {
+    obtenerTareas();
+  }, [obtenerTareas]);
 
   const crearTarea = async () => {
     try {
-      await fetch("http://localhost:8000/api/tareas/", {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tareas/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -124,7 +119,7 @@ export default function Tareas() {
   const actualizarTarea = async () => {
     try {
       if (tareaEditando) {
-        await fetch(`http://localhost:8000/api/tareas/${tareaEditando.id}/`, {
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tareas/${tareaEditando.id}/`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -142,7 +137,7 @@ export default function Tareas() {
 
   const eliminarTarea = async (id: number) => {
     try {
-      await fetch(`http://localhost:8000/api/tareas/${id}/`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tareas/${id}/`, {
         method: "DELETE",
       })
       setConfirmarEliminar(null)

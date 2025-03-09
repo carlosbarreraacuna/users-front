@@ -18,13 +18,15 @@ type Persona = {
   apellidos: string
   correo: string
   telefono: string
+  tipo_persona: string
+
 }
 
 export default function TablaPersonas() {
   const [personas, setPersonas] = useState<Persona[]>([])
   const [busqueda, setBusqueda] = useState("")
   const [personaAEliminar, setPersonaAEliminar] = useState<number | null>(null)
-  const [personaAEditar, setPersonaAEditar] = useState<any>(null)
+  const [personaAEditar, setPersonaAEditar] = useState<Persona | null>(null) // Updated type
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -108,14 +110,14 @@ export default function TablaPersonas() {
     }
   }
 
-  const confirmarEditar = (persona: any) => {
+  const confirmarEditar = (persona: Persona) => { 
     setPersonaAEditar(persona)
     setShowEditModal(true)
   }
 
-  const editarPersona = async (updatedPersona: any) => {
+  const editarPersona = async (updatedPersona: Persona) => { 
     try {
-      const response = await fetch(`http://localhost:8000/api/personas/${updatedPersona.id}/`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/personas/${updatedPersona.id}/`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedPersona),

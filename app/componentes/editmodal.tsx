@@ -6,11 +6,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+interface Persona {
+  id: number; 
+  tipo_documento: string;
+  numero_documento: string;
+  nombres: string;
+  apellidos: string;
+  correo: string;
+  telefono: string;
+  tipo_persona: string; 
+}
+
 interface EditModalProps {
   isOpen: boolean;
   onClose: () => void;
-  persona: any;
-  onSave: (persona: any) => void;
+  persona: Persona;
+  onSave: (persona: Persona) => void;
 }
 
 export function EditModal({ isOpen, onClose, persona, onSave }: EditModalProps) {

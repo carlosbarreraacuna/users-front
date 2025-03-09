@@ -62,11 +62,12 @@ export default function RegistroPersona() {
         telefono: values.telefono,
       };
   
-      const response = await fetch('http://localhost:8000/api/personas/', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/personas/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formattedData),
       });
+      
   
       if (!response.ok) {
         const errorData = await response.json();
