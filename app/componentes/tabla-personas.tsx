@@ -35,7 +35,7 @@ export default function TablaPersonas() {
   useEffect(() => {
     const fetchPersonas = async () => {
       try {
-        const response = await fetch("http://localhost:8000/api/personas/")
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/personas/`)
         if (!response.ok) {
           throw new Error("Error al obtener los datos")
         }
@@ -58,7 +58,7 @@ export default function TablaPersonas() {
   const handleBuscar = async () => {
     try {
       setLoading(true)
-      let url = "http://localhost:8000/api/personas/"
+      let url = `${process.env.NEXT_PUBLIC_API_URL}/api/personas/`
 
       if (busqueda.trim() !== "") {
         url += `?numero_documento=${busqueda}`
@@ -90,7 +90,7 @@ export default function TablaPersonas() {
   const eliminarPersona = async () => {
     if (personaAEliminar) {
       try {
-        const response = await fetch(`http://localhost:8000/api/personas/${personaAEliminar}/`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/personas/${personaAEliminar}/`, {
           method: "DELETE",
         })
         if (!response.ok) {
